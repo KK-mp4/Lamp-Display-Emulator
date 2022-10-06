@@ -84,7 +84,6 @@ async function UploadImg(event) {
 
 <template>
   <div class="flex justify-center flex-wrap pt-10 flex-col items-center">
-    <!-- <my-button type="button" @click="Draw()">Generate</my-button> -->
     <input class="block text-sm text-gray-400 rounded-lg border cursor-pointer focus:outline-none bg-gray-700 border-gray-600 placeholder-gray-400" type="file" accept=".png, .jpg" @change="UploadImg($event)">
     <p class="mt-1 text-sm text-gray-300">PNG or JPG (MAX. 512x512px).</p>
     <div
