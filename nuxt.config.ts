@@ -1,9 +1,9 @@
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   target: 'static',
-  router: {
-    base: '/Lamp-Display-Emulator/'
-  },
+  // router: {
+  //   base: '/Lamp-Display-Emulator/'
+  // },
   modules: ['@nuxtjs/tailwindcss'],
   tailwindcss: {
     cssPath: '~/assets/css/tailwind.css',
@@ -13,4 +13,15 @@ export default defineNuxtConfig({
     injectPosition: 0,
     viewer: true,
   },
+  publicRuntimeConfig:{
+    base:process.env.NODE_ENV == "production" ? "/Lamp-Display-Emulator/": "/"
+  },
+  app: {
+    baseURL: process.env.NODE_ENV =="production" ? "/Lamp-Display-Emulator": "/",
+    buildAssetsDir: "/nuxt/",
+    cdnURL:"/Lamp-Display-Emulator"
+  },
+  router:{
+    base:process.env.NODE_ENV =="production" ? "/Lamp-Display-Emulator/": "/"
+  }
 })
