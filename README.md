@@ -5,36 +5,36 @@ Todo:
 - add different binarization algorithms
 - add scaling algorithms
 
-![screencapture-localhost-3000-2022-10-06-04_17_43](https://user-images.githubusercontent.com/103208695/194201556-68ab3f7d-e3b9-431b-8d80-c7361dacf09b.png)
+![image](https://user-images.githubusercontent.com/103208695/194718886-8837fbfd-913b-40a6-b7e9-35d384f77f3d.png)
 
-Since each pixel becomes 8x8 I limited size to 512x512px. Instead of using vanilla 16x16px redstone lamp texture I used 8x8px texture from [Rodrigo's](https://www.curseforge.com/minecraft/texture-packs/rodrigos-pack) texture pack. Here are some examples of it working, for input I took pixelarts from [sexypixelize](https://sexypixelize.newgrounds.com/art) and processed them:
+Here are some examples of it working, for input I took pixelarts from [sexypixelize](https://sexypixelize.newgrounds.com/art) and processed them:
 
 ![3](https://user-images.githubusercontent.com/103208695/194202792-630edade-718e-42b2-b785-cc631e2d5888.png)  
 Dithering algorithm: Jarvis-Judice  
-![3](https://user-images.githubusercontent.com/103208695/194202803-8e5cad46-6101-4e10-938d-e9f8c6df4d0a.png)
+![image](https://user-images.githubusercontent.com/103208695/194718944-c83878a0-d990-4d6f-8e88-8ad1ce70d5f7.png)
 
 ![1](https://user-images.githubusercontent.com/103208695/194202834-5bbb5ccb-f661-4310-90b4-7358e660d995.png)  
 Global binarization: threshold  
-![1](https://user-images.githubusercontent.com/103208695/194202845-a8d257b6-7b43-46a0-ad70-7822937b6ec9.png)
+![image](https://user-images.githubusercontent.com/103208695/194718952-0236a0bb-ee77-43d6-b295-c78846d75621.png)
 
 ![2](https://user-images.githubusercontent.com/103208695/194202859-43f3db9f-d3ad-45a5-9774-9ea33328f19f.png)  
 Dithering algorithm: Floyd-Steinberg  
-![2](https://user-images.githubusercontent.com/103208695/194202865-8637c622-0966-49c4-85fd-464fc9f19ab8.png)
+![image](https://user-images.githubusercontent.com/103208695/194718977-564f5a3a-7208-4620-9877-3aae05cdb5ae.png)
 
 ![4](https://user-images.githubusercontent.com/103208695/194202874-6c1e9007-4b53-43fd-8ae2-c4382685e218.png)  
 Dithering algorithm: Bayer 8x8  
-![4](https://user-images.githubusercontent.com/103208695/194202881-9c59a910-6809-4984-a8f2-d97874b451cc.png)
+![image](https://user-images.githubusercontent.com/103208695/194718985-1d8136da-a704-4074-bbda-2b6420e44732.png)
 
 ![5](https://user-images.githubusercontent.com/103208695/194202892-5d435c6f-624f-46e3-8a10-153df3bfc495.png)  
 Dithering algorithm: Jarvis-Judice  
-![5](https://user-images.githubusercontent.com/103208695/194202897-7aa7c6c0-e935-4364-924e-54b8b90231d9.png)
+![image](https://user-images.githubusercontent.com/103208695/194718992-77b7d633-f81a-44ba-b559-1dc38b3ddf7d.png)
 
 ![6](https://user-images.githubusercontent.com/103208695/194202901-9fd1ca30-a230-4001-a270-b73e07cbbdbd.png)  
 Dithering algorithm: Jarvis-Judice  
-![6](https://user-images.githubusercontent.com/103208695/194202907-23fc6510-f9b6-4afb-aff4-b450c04a0da5.png)
+![image](https://user-images.githubusercontent.com/103208695/194719000-94f6e12d-37a2-4fc7-a9ac-a77ba90a809b.png)
 
 
-## How to launch using [Node.js](https://nodejs.org/en/) and [Visual Studio Code](https://code.visualstudio.com/download)
+## How to launch yourself using [Node.js](https://nodejs.org/en/) and [Visual Studio Code](https://code.visualstudio.com/download)
 
 ```bash
 # install yarn
