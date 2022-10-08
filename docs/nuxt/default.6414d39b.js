@@ -1,0 +1,1 @@
+import{a as n,i as t,b as a,o,e as c,j as i}from"./entry.dbc4630a.js";const _={class:"h-screen"},d=n({__name:"default",setup(l){const{public:{base:e}}=t();return a({link:[{rel:"icon",href:`${e}favicon.ico`,type:"image/x-icon"}]}),(s,r)=>(o(),c("div",_,[i(s.$slots,"default")]))}});export{d as default};

@@ -1,3 +1,14 @@
+<script setup lang="ts">
+const {public:{base}} = useRuntimeConfig()
+useHead({
+  link:[{
+    rel:"icon",
+    href:`${base}favicon.ico`,
+    type:"image/x-icon"
+  }]
+})
+</script>
+
 <template>
     <div class="h-screen">
         <slot />
