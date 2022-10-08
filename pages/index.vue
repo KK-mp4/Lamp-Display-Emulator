@@ -114,9 +114,9 @@ async function ResolutionChane() {
     <p class="text-lg text-gray-300">Lamp Display Emulator by KK</p>
     <a class="mb-5 text-xs text-blue-400 underline" href="https://github.com/KK-mp4/Lamp-Display-Emulator#readme" target="_blank" rel="noopener noreferrer">More info in GitHub</a>
       <div class="flex flex-wrap flex-row justify-center">
-      <div class="w-[300px]">
+      <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Lamp texture resolution:</p>
-        <select v-model="textureResolution" class="w-64 mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChane()">
+        <select v-model="textureResolution" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChane()">
           <option value="1x1">1x1</option>
           <option value="2x2">2x2</option>
           <option value="4x4">4x4</option>
@@ -124,24 +124,24 @@ async function ResolutionChane() {
           <option value="16x16">16x16</option>
         </select>
         <p class="mb-1 text-sm text-gray-300">PNG or JPG ({{ maxSize }}x{{ maxSize }}px max)</p>
-        <input class="block text-sm text-gray-400 rounded-lg border cursor-pointer focus:outline-none bg-gray-700 border-gray-600 placeholder-gray-400" type="file" accept=".png, .jpg" @change="UploadImg($event)">
+        <input class="block w-[90%] text-sm text-gray-400 rounded-lg border cursor-pointer focus:outline-none bg-gray-700 border-gray-600 placeholder-gray-400" type="file" accept=".png, .jpg" @change="UploadImg($event)">
       </div>
-      <div class="w-[300px]">
+      <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Dithering algorithm:</p>
-        <select v-model="dithering" class="w-64 mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChane()">
+        <select v-model="dithering" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChane()">
           <option value="None">None</option>
-          <!-- <option value="Random noise">Random noise</option>
-          <option value="Bayer 2x2">Bayer 2x2</option>
-          <option value="Bayer 4x4">Bayer 4x4</option>
-          <option value="Bayer 8x8">Bayer 8x8</option>
-          <option value="Floyd-Steinberg">Floyd-Steinberg</option> -->
+          <option value="Random noise">Random noise WIP</option>
+          <option value="Bayer 2x2">Bayer 2x2 WIP</option>
+          <option value="Bayer 4x4">Bayer 4x4 WIP</option>
+          <option value="Bayer 8x8">Bayer 8x8 WIP</option>
+          <option value="Floyd-Steinberg">Floyd-Steinberg WIP</option>
         </select>
         <label class="block mb-2 text-sm font-medium text-gray-300">Threshold: {{  threshold }}</label>
-        <input v-model="threshold" type="range" min="0" max="255" class="w-full h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChane()">
+        <input v-model="threshold" type="range" min="0" max="255" class="w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChane()">
       </div>
     </div>
     <div
-      class="w-full h-full mt-5 flex justify-center"
+      class="w-full h-full flex justify-center"
       style="image-rendering: pixelated"
     >
       <img :src="src" class="w-[75%]"/>
