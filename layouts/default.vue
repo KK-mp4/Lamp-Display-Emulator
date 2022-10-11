@@ -4,7 +4,8 @@ useHead({
   link:[{
     rel:"icon",
     href:`${base}favicon.ico`,
-    type:"image/x-icon"
+    type:"image/x-icon",
+    id: "favicon"
   }]
 })
 </script>

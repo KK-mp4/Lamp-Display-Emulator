@@ -10,10 +10,17 @@ const dithering = ref("None");  // Dithering algorithm option
 const threshold = ref(128); // Threshold for binarization
 let isLoading = ref(false); // Controls loading animation
 
+// Canvas needed for animated favicon
+let faviCanvas = document.createElement("canvas");
+faviCanvas.width = 16;
+faviCanvas.height = 16;
+let favictx = faviCanvas.getContext("2d");
+
 // Rendering function
 async function Draw() {
   const start = Date.now();
   isLoading.value = true;
+  setLoadFavicon();
 
   const img = new Image();
   img.src = inputUrl;
@@ -72,6 +79,7 @@ async function Draw() {
 
   src.value = canvas.toDataURL();
   isLoading.value = false;
+  setNormalFavicon();
   console.log(Date.now() - start + "ms - Calculation time");
 }
 
@@ -121,6 +129,35 @@ async function ResolutionChange() {
   }
 }
 
+// Sets favicon to normal rs lamps while it generates an image
+async function setLoadFavicon() {
+  const img = new Image();
+  img.src = "./faviconLoad.ico";
+  await new Promise((resolve) => {
+    img.onload = () => resolve(1);
+  });
+
+  favictx.drawImage(img, 0, 0, 16, 16);
+
+  let favicon = document.getElementById("favicon");
+  favicon.setAttribute("href", faviCanvas.toDataURL());
+	history.replaceState(null, null, window.location.hash == "#1" ? "#0" : "#1");
+}
+
+// Sets favicon to lit rs lamps
+async function setNormalFavicon() {
+  const img = new Image();
+  img.src = "./favicon.ico";
+  await new Promise((resolve) => {
+    img.onload = () => resolve(1);
+  });
+
+  favictx.drawImage(img, 0, 0, 16, 16);
+
+  let favicon = document.getElementById("favicon");
+  favicon.setAttribute("href", faviCanvas.toDataURL());
+	history.replaceState(null, null, window.location.hash == "#1" ? "#0" : "#1");
+}
 </script>
 
 <template>
@@ -155,7 +192,7 @@ async function ResolutionChange() {
         <input v-model="threshold" type="range" min="0" max="255" class="w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChange()">
       </div>
     </div>
-    <img v-if="isLoading" class="animate-spin h-7 w-7" src="/public/load.png" />
+    <img v-if="isLoading" class="animate-spin h-7 w-7 top-52 absolute" src="/load.png" />
     <div class="w-full h-full flex justify-center" style="image-rendering: pixelated">
       <img :src="src" class="w-[75%]"/>
     </div>

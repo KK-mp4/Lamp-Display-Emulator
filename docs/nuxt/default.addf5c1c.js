@@ -1,1 +1,0 @@
-import{a as n,k as t,b as a,o,e as c,l}from"./entry.b3b2946f.js";const _={class:"h-screen"},d=n({__name:"default",setup(i){const{public:{base:e}}=t();return a({link:[{rel:"icon",href:`${e}favicon.ico`,type:"image/x-icon"}]}),(s,r)=>(o(),c("div",_,[l(s.$slots,"default")]))}});export{d as default};
