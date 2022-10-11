@@ -5,7 +5,7 @@ Todo:
 - add different binarization algorithms
 - add scaling algorithms
 
-![image](https://user-images.githubusercontent.com/103208695/194718886-8837fbfd-913b-40a6-b7e9-35d384f77f3d.png)
+![image](https://user-images.githubusercontent.com/103208695/194985165-258b9bee-4f48-41e1-86bf-38f59934898a.png)
 
 Here are some examples of it working, for input I took pixelarts from [sexypixelize](https://sexypixelize.newgrounds.com/art) and processed them:
 
