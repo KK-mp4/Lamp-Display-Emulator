@@ -1,16 +1,20 @@
 <script setup lang="ts">
 useHead({ title: "Generator" });
 
-const textureResolution = ref("16x16");
-const src = ref("");
-let textureSize = 16;
-const maxSize = ref(512);
-let inputUrl;
-const dithering = ref("None");
-const threshold = ref(128);
+const textureResolution = ref("16x16"); // Lamp texture resolution
+const src = ref(""); // DataURL of processed image
+let textureSize = 16; // Lamp texture resolution
+const maxSize = ref(512); // Displays maximum size for image depending on texture size
+let inputUrl; // DataURL of uploaded image
+const dithering = ref("None");  // Dithering algorithm option
+const threshold = ref(128); // Threshold for binarization
+let isLoading = ref(false); // Controls loading animation
 
+// Rendering function
 async function Draw() {
   const start = Date.now();
+  isLoading.value = true;
+
   const img = new Image();
   img.src = inputUrl;
   await new Promise((resolve) => {
@@ -20,6 +24,7 @@ async function Draw() {
   let imgWidth = img.width;
   let imgHeight = img.height;
 
+  // Limits input image to max size depending on selected rs lamp res
   if (imgWidth > maxSize.value) {
     imgWidth = maxSize.value;
   }
@@ -34,6 +39,7 @@ async function Draw() {
   const imgContext = imgCanvas.getContext("2d");
   imgContext.drawImage(img, 0, 0, img.width, img.height);
 
+  // Loading of lamp textures
   const lampOff = new Image();
   lampOff.src = "./" + textureResolution.value + "/redstone_lamp_off.png";
   await new Promise((resolve) => {
@@ -51,6 +57,7 @@ async function Draw() {
   canvas.height = imgHeight * textureSize;
   const ctx = canvas.getContext("2d");
 
+  // Generation of output 
   for (let i = 0; i < imgHeight; i++) {
     for (let j = 0; j < imgWidth; j++) {
       const pixelRGBA = imgContext.getImageData(j, i, 1, 1).data;
@@ -64,9 +71,11 @@ async function Draw() {
   }
 
   src.value = canvas.toDataURL();
+  isLoading.value = false;
   console.log(Date.now() - start + "ms - Calculation time");
 }
 
+// Uploads image to DataURL
 async function UploadImg(event) {
     if (event.target.files && event.target.files[0]) {
         let reader = new FileReader();
@@ -80,7 +89,8 @@ async function UploadImg(event) {
     }
 }
 
-async function ResolutionChane() {
+// Calls Draw function on resolution/dithering/threshold change
+async function ResolutionChange() {
   if (textureResolution.value === "1x1") {
     textureSize = 1;
     maxSize.value = 8192;
@@ -96,6 +106,10 @@ async function ResolutionChane() {
   else if (textureResolution.value === "8x8") {
     textureSize = 8;
     maxSize.value = 1024;
+  }
+  else if (textureResolution.value === "32x32") {
+    textureSize = 32;
+    maxSize.value = 256;
   }
   else {
     textureSize = 16;
@@ -116,19 +130,20 @@ async function ResolutionChane() {
       <div class="flex flex-wrap flex-row justify-center">
       <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Lamp texture resolution:</p>
-        <select v-model="textureResolution" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChane()">
+        <select v-model="textureResolution" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChange()">
           <option value="1x1">1x1</option>
           <option value="2x2">2x2</option>
           <option value="4x4">4x4</option>
           <option value="8x8">8x8</option>
           <option value="16x16">16x16</option>
+          <option value="32x32">32x32</option>
         </select>
         <p class="mb-1 text-sm text-gray-300">PNG or JPG ({{ maxSize }}x{{ maxSize }}px max)</p>
         <input class="block w-[90%] text-sm text-gray-400 rounded-lg border cursor-pointer focus:outline-none bg-gray-700 border-gray-600 placeholder-gray-400" type="file" accept=".png, .jpg" @change="UploadImg($event)">
       </div>
       <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Dithering algorithm:</p>
-        <select v-model="dithering" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChane()">
+        <select v-model="dithering" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChange()">
           <option value="None">None</option>
           <option value="Random noise">Random noise WIP</option>
           <option value="Bayer 2x2">Bayer 2x2 WIP</option>
@@ -137,13 +152,11 @@ async function ResolutionChane() {
           <option value="Floyd-Steinberg">Floyd-Steinberg WIP</option>
         </select>
         <label class="block mb-2 text-sm font-medium text-gray-300">Threshold: {{  threshold }}</label>
-        <input v-model="threshold" type="range" min="0" max="255" class="w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChane()">
+        <input v-model="threshold" type="range" min="0" max="255" class="w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChange()">
       </div>
     </div>
-    <div
-      class="w-full h-full flex justify-center"
-      style="image-rendering: pixelated"
-    >
+    <img v-if="isLoading" class="animate-spin h-7 w-7" src="/public/load.png" />
+    <div class="w-full h-full flex justify-center" style="image-rendering: pixelated">
       <img :src="src" class="w-[75%]"/>
     </div>
   </div>
