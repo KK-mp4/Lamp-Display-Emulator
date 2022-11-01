@@ -13,7 +13,7 @@ useHead({
       lang: 'en'
     },
   meta: [
-    { name: 'description', content: 'Author: ebolblga, Snake game with shading and dithering.' }
+    { name: 'description', content: 'Author: KK, Dithering algorithms and redstone lamp display emilator' }
   ],
 });
 </script>
