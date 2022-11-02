@@ -11,7 +11,7 @@ const threshold = ref(128); // Threshold for binarization
 const isLoading = ref(false); // Controls loading animation
 
 const gammaCoorect = ref(false);
-const outputBlackWhite = ref(false);
+const renderAsLamps = ref(true);
 
 // Canvas needed for animated favicon
 let faviCanvas = document.createElement("canvas");
@@ -60,8 +60,28 @@ async function Draw() {
     case "None": {
       break;
     }
-    case "Random noise": {
-      const processedData = ditherRandom(inputRGBA);
+    case "White noise": {
+      const processedData = ditherWhiteNoise(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Blue noise": {
+      const processedData = await ditherBlueNoise(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Interleaved Gradient Noise": {
+      const processedData = ditherIGN(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "R2": {
+      const processedData = ditherR2(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Plus": {
+      const processedData = ditherPlus(inputRGBA);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
@@ -78,10 +98,6 @@ async function Draw() {
     case "Bayer 8x8": {
       const processedData = ditherBayer8x8(inputRGBA);
       imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Blue noise": {
-
       break;
     }
     case "Riemersma": {
@@ -154,7 +170,7 @@ async function Draw() {
   const ctx = canvas.getContext("2d");
 
   // Generation of the output 
-  if (!outputBlackWhite.value) {
+  if (renderAsLamps.value) {
     const imgRGBA = imgContext.getImageData(0, 0, imgWidth, imgHeight);
     for (let i = 0; i < imgHeight; i++) {
       for (let j = 0; j < imgWidth; j++) {
@@ -214,10 +230,81 @@ function YtoLstar(Y) {
   }
 }
 
-function ditherRandom(image) {
+function ditherWhiteNoise(image) {
   for (let i = 0; i < image.data.length; i += 4) {
     const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
     const map = Math.floor((luminance + (Math.random() * 255)) / 2);
+    const value = map < threshold.value ? 0 : 255;
+    image.data.fill(value, i, i + 3);
+  }
+
+  return image;
+}
+
+function ditherIGN(image) {
+  for (let i = 0; i < image.data.length; i += 4) {
+    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+    const x = i / 4 % image.width;
+    const y = Math.floor(i / 4 / image.width);
+    const val = ((((0.06711056 * x) + (0.00583715 * y)) % 1) * 52.9829189 ) % 1;
+    const map = Math.floor((luminance + (val * 255)) / 2);
+    const value = map < threshold.value ? 0 : 255;
+    image.data.fill(value, i, i + 3);
+  }
+
+  return image;
+}
+
+async function ditherBlueNoise(image) {
+  const blueNoise = new Image();
+  blueNoise.src = "./bluenoise.png";
+  await new Promise((resolve) => {
+    blueNoise.onload = () => resolve(1);
+  });
+
+  const width = blueNoise.width;
+  const height = blueNoise.height;
+
+  const blueNoiseCanvas = document.createElement("canvas");
+  blueNoiseCanvas.width = width;
+  blueNoiseCanvas.height = height;
+  const BlueNoiseCtx = blueNoiseCanvas.getContext("2d", { willReadFrequently: true });
+  BlueNoiseCtx.drawImage(blueNoise, 0, 0, width, height);
+  const noiseData = BlueNoiseCtx.getImageData(0, 0, width, height);
+
+  for (let i = 0; i < image.data.length; i += 4) {
+    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+    const x = i / 4 % image.width;
+    const y = Math.floor(i / 4 / image.width);
+    const map = Math.floor((luminance + noiseData.data[(x % width) * 4 * width + (y % height) * 4]) / 2);
+    const value = map < threshold.value ? 0 : 255;
+    image.data.fill(value, i, i + 3);
+  }
+
+  return image;
+}
+
+function ditherR2(image) {
+  for (let i = 0; i < image.data.length; i += 4) {
+    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+    const x = i / 4 % image.width;
+    const y = Math.floor(i / 4 / image.width);
+    const val = (x / 1.32471795724474602596 + y / (1.32471795724474602596 * 1.32471795724474602596)) % 1;
+    const map = Math.floor((luminance + (val * 255)) / 2);
+    const value = map < threshold.value ? 0 : 255;
+    image.data.fill(value, i, i + 3);
+  }
+
+  return image;
+}
+
+function ditherPlus(image) {
+  for (let i = 0; i < image.data.length; i += 4) {
+    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+    const x = i / 4 % image.width;
+    const y = Math.floor(i / 4 / image.width);
+    const val = (x / 5 + y * 0.6) % 1;
+    const map = Math.floor((luminance + (val * 255)) / 2);
     const value = map < threshold.value ? 0 : 255;
     image.data.fill(value, i, i + 3);
   }
@@ -623,14 +710,22 @@ async function setNormalFavicon() {
         <p class="mb-1 text-sm text-gray-300">Dithering algorithm:</p>
         <select v-model="dithering" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChange()">
           <option value="None">None</option>
-          <option value="Random noise">Random noise</option>
+          <option class="text-[0px] bg-gray-500" disabled>&nbsp;</option>
+          <option value="White noise">White noise</option>
+          <option value="Blue noise">Blue noise</option>
+          <option value="Interleaved Gradient Noise">Interleaved Gradient noise</option>
+          <option value="R2">R2</option>
+          <option value="Plus">Plus</option>
+          <option class="text-[0px] bg-gray-500" disabled>&nbsp;</option>
           <option value="Bayer 2x2">Bayer 2x2</option>
           <option value="Bayer 4x4">Bayer 4x4</option>
           <option value="Bayer 8x8">Bayer 8x8</option>
           <option value="Cluster dot">WIP Cluster dot</option>
-          <option value="Blue noise">WIP Blue noise</option>
           <option value="Riemersma">WIP Riemersma</option>
+          <option class="text-[0px] bg-gray-500" disabled>&nbsp;</option>
           <option value="Floyd-Steinberg">Floyd-Steinberg</option>
+          <option value="Gradient-based">WIP Gradient-based</option>
+          <option value="Lattice-Boltzmann">WIP Lattice-Boltzmann</option>
           <option value="Jarvis-Judice-Ninke">Jarvis-Judice-Ninke</option>
           <option value="Atkinson">Atkinson</option>
           <option value="Stucki">Stucki</option>
@@ -645,18 +740,18 @@ async function setNormalFavicon() {
       </div>
       <div class="w-[300px] mb-5">
         <div class="mt-7 flex items-center mb-4">
-          <input v-model= "gammaCoorect" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Gamme correction</label>
+          <input v-model= "gammaCoorect" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-300">Gamma correction</label>
         </div>
         <div class="flex items-center mb-4">
-          <input v-model= "outputBlackWhite" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
-          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Output as black / white</label>
+          <input v-model= "renderAsLamps" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-300">Apply lamp texture</label>
         </div>
       </div>
     </div>
     <img v-if="isLoading" class="animate-spin h-7 w-7 top-52 absolute" src="/load.png" />
     <div class="flex justify-center" style="image-rendering: pixelated">
-      <img :src="src" v-if="src" class="w-[90vw] h-[75vh] object-contain"/>
+      <img :src="src" v-if="src" class="w-[90vw] h-70vh object-contain"/>
     </div>
   </div>
 </template>
