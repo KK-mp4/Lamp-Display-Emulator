@@ -8,7 +8,10 @@ const maxSize = ref(512); // Displays maximum size for image depending on textur
 let inputUrl; // DataURL of uploaded image
 const dithering = ref("None");  // Dithering algorithm option
 const threshold = ref(128); // Threshold for binarization
-let isLoading = ref(false); // Controls loading animation
+const isLoading = ref(false); // Controls loading animation
+
+const gammaCoorect = ref(false);
+const outputBlackWhite = ref(false);
 
 // Canvas needed for animated favicon
 let faviCanvas = document.createElement("canvas");
@@ -47,6 +50,12 @@ async function Draw() {
   imgContext.drawImage(img, 0, 0, img.width, img.height);
   const inputRGBA = imgContext.getImageData(0, 0, imgWidth, imgHeight);
 
+  // gamma correction
+  if (gammaCoorect.value) {
+    const gammaCorrectionData = gammaCorrection(inputRGBA);
+    imgContext.putImageData(gammaCorrectionData, 0, 0);
+  }
+
   switch (dithering.value) {
     case "None": {
       break;
@@ -71,6 +80,59 @@ async function Draw() {
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
+    case "Blue noise": {
+
+      break;
+    }
+    case "Riemersma": {
+
+      break;
+    }
+    case "Floyd-Steinberg": {
+      const processedData = ditherFloydSteinberg(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Jarvis-Judice-Ninke": {
+      const processedData = ditherJarvisJudiceNinke(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Atkinson": {
+      const processedData = ditherAtkinson(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Stucki": {
+      const processedData = ditherStucki(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Burkes": {
+      const processedData = ditherBurkes(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Sierra": {
+      const processedData = ditherSierra(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Two-Row Sierra": {
+      const processedData = ditherSierra2row(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Sierra Lite": {
+      const processedData = ditherSierraLite(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Stevenson-Arce": {
+      const processedData = ditherStevensonArce(inputRGBA);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
   }
 
   // Loading of lamp textures
@@ -92,22 +154,75 @@ async function Draw() {
   const ctx = canvas.getContext("2d");
 
   // Generation of the output 
-  const imgRGBA = imgContext.getImageData(0, 0, imgWidth, imgHeight);
-  for (let i = 0; i < imgHeight; i++) {
-    for (let j = 0; j < imgWidth; j++) {
-      const pixelBrightness = 0.2126 * imgRGBA.data[((i * imgWidth) + j) * 4] + 0.7152 * imgRGBA.data[(((i * imgWidth) + j) * 4) + 1] + 0.0722 * imgRGBA.data[(((i * imgWidth) + j) * 4) + 2];
-      if (pixelBrightness >= threshold.value) {
-        ctx.drawImage(lampOn, j * textureSize, i * textureSize);
-      } else {
-        ctx.drawImage(lampOff, j * textureSize, i * textureSize);
+  if (!outputBlackWhite.value) {
+    const imgRGBA = imgContext.getImageData(0, 0, imgWidth, imgHeight);
+    for (let i = 0; i < imgHeight; i++) {
+      for (let j = 0; j < imgWidth; j++) {
+        const pixelBrightness = 0.2126 * imgRGBA.data[((i * imgWidth) + j) * 4] + 0.7152 * imgRGBA.data[(((i * imgWidth) + j) * 4) + 1] + 0.0722 * imgRGBA.data[(((i * imgWidth) + j) * 4) + 2];
+        if (pixelBrightness >= threshold.value) {
+          ctx.drawImage(lampOn, j * textureSize, i * textureSize);
+        } else {
+          ctx.drawImage(lampOff, j * textureSize, i * textureSize);
+        }
       }
     }
+
+    src.value = canvas.toDataURL();
+  }
+  else {
+    src.value = imgCanvas.toDataURL();
   }
 
-  src.value = canvas.toDataURL();
   isLoading.value = false;
   setNormalFavicon();
   console.log(Date.now() - start + "ms - Calculation time");
+}
+
+function gammaCorrection(image) {
+  for (let i = 0; i < image.data.length; i += 4) {
+    const vR = image.data[i] / 255;
+    const vG = image.data[i + 1] / 255;
+    const vB = image.data[i + 2] / 255;
+
+    // image.data[i] = sRGBtoLin(vR);
+    // image.data[i + 1] = sRGBtoLin(vG);
+    // image.data[i + 2] = sRGBtoLin(vB);
+
+    const Y = (0.2126 * sRGBtoLin(vR) + 0.7152 * sRGBtoLin(vG) + 0.0722 * sRGBtoLin(vB))
+    const starL = YtoLstar(Y) * 2.55;
+    image.data.fill(starL, i, i + 3);
+  }
+
+  return image;
+}
+
+function sRGBtoLin(colorChannel) {
+  if ( colorChannel <= 0.04045 ) {
+      return colorChannel / 12.92;
+  }
+  else {
+      return Math.pow((( colorChannel + 0.055) / 1.055), 2.4);
+  }
+}
+
+function YtoLstar(Y) {
+  if ( Y <= (216/24389)) {
+      return Y * (24389 / 27);
+  }
+  else {
+      return Math.pow(Y,(1 / 3)) * 116 - 16;
+  }
+}
+
+function ditherRandom(image) {
+  for (let i = 0; i < image.data.length; i += 4) {
+    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+    const map = Math.floor((luminance + (Math.random() * 255)) / 2);
+    const value = map < threshold.value ? 0 : 255;
+    image.data.fill(value, i, i + 3);
+  }
+
+  return image;
 }
 
 function ditherBayer2x2(image) {
@@ -172,12 +287,237 @@ function ditherBayer8x8(image) {
   return image;
 }
 
-function ditherRandom(image) {
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const map = Math.floor((luminance + (Math.random() * 255)) / 2);
-    const value = map < threshold.value ? 0 : 255;
+function ditherFloydSteinberg(image) {
+  // credits to https://github.com/NielsLeenheer/CanvasDither
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 16);
     image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error * 7;
+    luminance[l + width - 1] += error * 3;
+    luminance[l + width] += error * 5;
+    luminance[l + width + 1] += error;
+  }
+
+  return image;
+}
+
+function ditherAtkinson(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 8);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error;
+    luminance[l + 2] += error;
+    luminance[l + width - 1] += error;
+    luminance[l + width] += error;
+    luminance[l + width + 1] += error;
+    luminance[l + 2 * width] += error;
+  }
+
+  return image;
+}
+
+function ditherJarvisJudiceNinke(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 48);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error * 7;
+    luminance[l + 2] += error * 5;
+    luminance[l + width - 2] += error * 3;
+    luminance[l + width - 1] += error * 5;
+    luminance[l + width] += error * 7;
+    luminance[l + width + 1] += error * 5;
+    luminance[l + width + 2] += error * 3;
+    luminance[l + (width * 2) - 2] += error;
+    luminance[l + (width * 2) - 1] += error* 3;
+    luminance[l + (width * 2)] += error * 5;
+    luminance[l + (width * 2) + 1] += error * 3;
+    luminance[l + (width * 2) + 2] += error;
+  }
+
+  return image;
+}
+
+function ditherStucki(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 42);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error << 3;
+    luminance[l + 2] += error << 2;
+    luminance[l + width - 2] += error << 1;
+    luminance[l + width - 1] += error << 2;
+    luminance[l + width] += error << 3;
+    luminance[l + width + 1] += error << 2;
+    luminance[l + width + 2] += error << 1;
+    luminance[l + (width * 2) - 2] += error;
+    luminance[l + (width * 2) - 1] += error << 1;
+    luminance[l + (width * 2)] += error << 2;
+    luminance[l + (width * 2) + 1] += error << 1;
+    luminance[l + (width * 2) + 2] += error;
+  }
+
+  return image;
+}
+
+function ditherBurkes(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 32);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error << 3;
+    luminance[l + 2] += error << 2;
+    luminance[l + width - 2] += error << 1;
+    luminance[l + width - 1] += error << 2;
+    luminance[l + width] += error << 3;
+    luminance[l + width + 1] += error << 2;
+    luminance[l + width + 2] += error << 1;
+  }
+
+  return image;
+}
+
+function ditherSierra(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 32);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error * 5;
+    luminance[l + 2] += error * 3;
+    luminance[l + width - 2] += error << 1;
+    luminance[l + width - 1] += error << 2;
+    luminance[l + width] += error * 5;
+    luminance[l + width + 1] += error << 2;
+    luminance[l + width + 2] += error << 1;
+    luminance[l + (width * 2) - 1] += error << 1;
+    luminance[l + (width * 2)] += error * 3;
+    luminance[l + (width * 2) + 1] += error << 1;
+  }
+
+  return image;
+}
+
+function ditherSierra2row(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 16);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error << 2;
+    luminance[l + 2] += error * 3;
+    luminance[l + width - 2] += error;
+    luminance[l + width - 1] += error << 1;
+    luminance[l + width] += error * 3;
+    luminance[l + width + 1] += error << 1;
+    luminance[l + width + 2] += error;
+  }
+
+  return image;
+}
+
+function ditherSierraLite(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 4);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 1] += error << 1;
+    luminance[l + width - 1] += error;
+    luminance[l + width] += error;
+  }
+
+  return image;
+}
+
+function ditherStevensonArce(image) {
+  const width = image.width;
+  const luminance = new Uint8ClampedArray(image.width * image.height);
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
+  }
+
+  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
+    const value = luminance[l] < threshold.value ? 0 : 255;
+    const error = Math.floor((luminance[l] - value) / 200);
+    image.data.fill(value, i, i + 3);
+
+    luminance[l + 2] += error << 5;
+    luminance[l + width - 3] += error * 12;
+    luminance[l + width - 1] += error * 26;
+    luminance[l + width + 1] += error * 30;
+    luminance[l + width + 3] += error << 4;
+    luminance[l + (width * 2) - 2] += error * 12;
+    luminance[l + (width * 2)] += error * 26;
+    luminance[l + (width * 2) + 2] += error * 12;
+    luminance[l + (width * 3) - 3] += error * 5;
+    luminance[l + (width * 3) - 1] += error * 12;
+    luminance[l + (width * 3) + 1] += error * 12;
+    luminance[l + (width * 3) + 3] += error * 5;
   }
 
   return image;
@@ -264,7 +604,7 @@ async function setNormalFavicon() {
   <div class="flex justify-center flex-wrap pt-2 flex-col items-center min-w-[300px]">
     <p class="text-lg text-gray-300">Lamp Display Emulator by KK</p>
     <a class="text-xs text-blue-400 underline" href="https://github.com/KK-mp4/Lamp-Display-Emulator#readme" target="_blank" rel="noopener noreferrer">More info in GitHub</a>
-    <a class="mb-5 text-xs text-blue-400 underline" href="https://kk-mp4.github.io/RGB-Lamp-Display-Emulator/" target="_blank" rel="noopener noreferrer">RGB version</a>
+    <a class="mb-5 text-xs text-blue-400 underline" href="https://kk-mp4.github.io/RGB-Lamp-Display-Emulator/" target="_blank" rel="noopener noreferrer">RGB 3 bit version</a>
       <div class="flex flex-wrap flex-row justify-center">
       <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Lamp texture resolution:</p>
@@ -287,25 +627,36 @@ async function setNormalFavicon() {
           <option value="Bayer 2x2">Bayer 2x2</option>
           <option value="Bayer 4x4">Bayer 4x4</option>
           <option value="Bayer 8x8">Bayer 8x8</option>
-          <option value="Blue noise">Blue noise WIP</option>
-          <option value="Riemersma">Riemersma WIP</option>
-          <option value="Floyd-Steinberg">Floyd-Steinberg WIP</option>
-          <option value="Jarvis-Judice-Ninke">Jarvis-Judice-Ninke WIP</option>
-          <option value="Atkinson">Atkinson WIP</option>
-          <option value="Stucki">Stucki WIP</option>
-          <option value="Burkes">Burkes WIP</option>
-          <option value="Sierra">Sierra WIP</option>
-          <option value="Sierra 2-lines">Sierra 2-lines WIP</option>
-          <option value="Sierra Lite">Sierra Lite WIP</option>
-          <option value="Stevenson-Arce">Stevenson-Arce WIP</option>
+          <option value="Cluster dot">WIP Cluster dot</option>
+          <option value="Blue noise">WIP Blue noise</option>
+          <option value="Riemersma">WIP Riemersma</option>
+          <option value="Floyd-Steinberg">Floyd-Steinberg</option>
+          <option value="Jarvis-Judice-Ninke">Jarvis-Judice-Ninke</option>
+          <option value="Atkinson">Atkinson</option>
+          <option value="Stucki">Stucki</option>
+          <option value="Burkes">Burkes</option>
+          <option value="Sierra">Sierra</option>
+          <option value="Two-Row Sierra">Two-Row Sierra</option>
+          <option value="Sierra Lite">Sierra Lite</option>
+          <option value="Stevenson-Arce">Stevenson-Arce</option>
         </select>
         <label class="block mb-2 text-sm font-medium text-gray-300">Threshold: {{  threshold }}</label>
-        <input v-model="threshold" type="range" min="0" max="255" class="w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChange()">
+        <input v-model="threshold" type="range" min="0" max="255" class="mb-4 w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChange()">
+      </div>
+      <div class="w-[300px] mb-5">
+        <div class="mt-7 flex items-center mb-4">
+          <input v-model= "gammaCoorect" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Gamme correction</label>
+        </div>
+        <div class="flex items-center mb-4">
+          <input v-model= "outputBlackWhite" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 bg-gray-100 rounded border-gray-300 focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600">
+          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">Output as black / white</label>
+        </div>
       </div>
     </div>
     <img v-if="isLoading" class="animate-spin h-7 w-7 top-52 absolute" src="/load.png" />
-    <div class="w-full h-full flex justify-center" style="image-rendering: pixelated">
-      <img :src="src" class="w-[75%]"/>
+    <div class="flex justify-center" style="image-rendering: pixelated">
+      <img :src="src" v-if="src" class="w-[90vw] h-[75vh] object-contain"/>
     </div>
   </div>
 </template>
