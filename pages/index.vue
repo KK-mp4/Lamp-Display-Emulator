@@ -61,42 +61,52 @@ async function Draw() {
       break;
     }
     case "White noise": {
-      const processedData = ditherWhiteNoise(inputRGBA);
+      const processedData = ditherWhiteNoise(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Blue noise": {
-      const processedData = await ditherBlueNoise(inputRGBA);
+      const processedData = await ditherBlueNoise(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Interleaved Gradient Noise": {
-      const processedData = ditherIGN(inputRGBA);
+      const processedData = ditherIGN(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "R2": {
-      const processedData = ditherR2(inputRGBA);
+      const processedData = ditherR2(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Plus": {
-      const processedData = ditherPlus(inputRGBA);
+      const processedData = ditherPlus(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Bayer 2x2": {
-      const processedData = ditherBayer2x2(inputRGBA);
+      const processedData = ditherBayer2x2(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Bayer 4x4": {
-      const processedData = ditherBayer4x4(inputRGBA);
+      const processedData = ditherBayer4x4(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Bayer 8x8": {
-      const processedData = ditherBayer8x8(inputRGBA);
+      const processedData = ditherBayer8x8(inputRGBA, threshold.value);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Pattern Halftoning": {
+      const processedData = ditherPatternHalftoning(inputRGBA, threshold.value);
+      imgContext.putImageData(processedData, 0, 0);
+      break;
+    }
+    case "Cluster dot": {
+      const processedData = ditherClusterDot(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
@@ -105,47 +115,47 @@ async function Draw() {
       break;
     }
     case "Floyd-Steinberg": {
-      const processedData = ditherFloydSteinberg(inputRGBA);
+      const processedData = ditherFloydSteinberg(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Jarvis-Judice-Ninke": {
-      const processedData = ditherJarvisJudiceNinke(inputRGBA);
+      const processedData = ditherJarvisJudiceNinke(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Atkinson": {
-      const processedData = ditherAtkinson(inputRGBA);
+      const processedData = ditherAtkinson(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Stucki": {
-      const processedData = ditherStucki(inputRGBA);
+      const processedData = ditherStucki(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Burkes": {
-      const processedData = ditherBurkes(inputRGBA);
+      const processedData = ditherBurkes(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Sierra": {
-      const processedData = ditherSierra(inputRGBA);
+      const processedData = ditherSierra(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Two-Row Sierra": {
-      const processedData = ditherSierra2row(inputRGBA);
+      const processedData = ditherSierra2row(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Sierra Lite": {
-      const processedData = ditherSierraLite(inputRGBA);
+      const processedData = ditherSierraLite(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
     case "Stevenson-Arce": {
-      const processedData = ditherStevensonArce(inputRGBA);
+      const processedData = ditherStevensonArce(inputRGBA, threshold.value);
       imgContext.putImageData(processedData, 0, 0);
       break;
     }
@@ -228,386 +238,6 @@ function YtoLstar(Y) {
   else {
       return Math.pow(Y,(1 / 3)) * 116 - 16;
   }
-}
-
-function ditherWhiteNoise(image) {
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const map = Math.floor((luminance + (Math.random() * 255)) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-function ditherIGN(image) {
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const x = i / 4 % image.width;
-    const y = Math.floor(i / 4 / image.width);
-    const val = ((((0.06711056 * x) + (0.00583715 * y)) % 1) * 52.9829189 ) % 1;
-    const map = Math.floor((luminance + (val * 255)) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-async function ditherBlueNoise(image) {
-  const blueNoise = new Image();
-  blueNoise.src = "./bluenoise.png";
-  await new Promise((resolve) => {
-    blueNoise.onload = () => resolve(1);
-  });
-
-  const width = blueNoise.width;
-  const height = blueNoise.height;
-
-  const blueNoiseCanvas = document.createElement("canvas");
-  blueNoiseCanvas.width = width;
-  blueNoiseCanvas.height = height;
-  const BlueNoiseCtx = blueNoiseCanvas.getContext("2d", { willReadFrequently: true });
-  BlueNoiseCtx.drawImage(blueNoise, 0, 0, width, height);
-  const noiseData = BlueNoiseCtx.getImageData(0, 0, width, height);
-
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const x = i / 4 % image.width;
-    const y = Math.floor(i / 4 / image.width);
-    const map = Math.floor((luminance + noiseData.data[(x % width) * 4 * width + (y % height) * 4]) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-function ditherR2(image) {
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const x = i / 4 % image.width;
-    const y = Math.floor(i / 4 / image.width);
-    const val = (x / 1.32471795724474602596 + y / (1.32471795724474602596 * 1.32471795724474602596)) % 1;
-    const map = Math.floor((luminance + (val * 255)) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-function ditherPlus(image) {
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const x = i / 4 % image.width;
-    const y = Math.floor(i / 4 / image.width);
-    const val = (x / 5 + y * 0.6) % 1;
-    const map = Math.floor((luminance + (val * 255)) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-function ditherBayer2x2(image) {
-  const thresholdMap = [
-    [0,  127],
-    [192, 63]
-  ];
-
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const x = i / 4 % image.width;
-    const y = Math.floor(i / 4 / image.width);
-    const map = Math.floor((luminance + thresholdMap[x % 2][y % 2]) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-function ditherBayer4x4(image) {
-  const thresholdMap = [
-    [15, 135, 45, 165],
-    [195, 75, 225, 105],
-    [60, 180, 30, 150],
-    [240, 120, 210, 90]
-  ];
-
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const x = i / 4 % image.width;
-    const y = Math.floor(i / 4 / image.width);
-    const map = Math.floor((luminance + thresholdMap[x % 4][y % 4]) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-function ditherBayer8x8(image) {
-  const thresholdMap = [
-    [0,  32, 8,  40, 2,  34, 10, 42],
-    [48, 16, 56, 24, 50, 18, 58, 26],
-    [12, 44, 4,  36, 14, 46, 6,  38],
-    [60, 28, 52, 20, 62, 30, 54, 22],
-    [3,  35, 11, 43, 1,  33, 9,  41],
-    [51, 19, 59, 27, 49, 17, 57, 25],
-    [15, 47, 7,  39, 13, 45, 5,  37],
-    [63, 31, 55, 23, 61, 29, 53, 21]
-  ];
-
-  for (let i = 0; i < image.data.length; i += 4) {
-    const luminance = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-    const x = i / 4 % image.width;
-    const y = Math.floor(i / 4 / image.width);
-    const map = Math.floor((luminance + (thresholdMap[x % 8][y % 8] * 4)) / 2);
-    const value = map < threshold.value ? 0 : 255;
-    image.data.fill(value, i, i + 3);
-  }
-
-  return image;
-}
-
-function ditherFloydSteinberg(image) {
-  // credits to https://github.com/NielsLeenheer/CanvasDither
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 16);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error * 7;
-    luminance[l + width - 1] += error * 3;
-    luminance[l + width] += error * 5;
-    luminance[l + width + 1] += error;
-  }
-
-  return image;
-}
-
-function ditherAtkinson(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 8);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error;
-    luminance[l + 2] += error;
-    luminance[l + width - 1] += error;
-    luminance[l + width] += error;
-    luminance[l + width + 1] += error;
-    luminance[l + 2 * width] += error;
-  }
-
-  return image;
-}
-
-function ditherJarvisJudiceNinke(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 48);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error * 7;
-    luminance[l + 2] += error * 5;
-    luminance[l + width - 2] += error * 3;
-    luminance[l + width - 1] += error * 5;
-    luminance[l + width] += error * 7;
-    luminance[l + width + 1] += error * 5;
-    luminance[l + width + 2] += error * 3;
-    luminance[l + (width * 2) - 2] += error;
-    luminance[l + (width * 2) - 1] += error* 3;
-    luminance[l + (width * 2)] += error * 5;
-    luminance[l + (width * 2) + 1] += error * 3;
-    luminance[l + (width * 2) + 2] += error;
-  }
-
-  return image;
-}
-
-function ditherStucki(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 42);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error << 3;
-    luminance[l + 2] += error << 2;
-    luminance[l + width - 2] += error << 1;
-    luminance[l + width - 1] += error << 2;
-    luminance[l + width] += error << 3;
-    luminance[l + width + 1] += error << 2;
-    luminance[l + width + 2] += error << 1;
-    luminance[l + (width * 2) - 2] += error;
-    luminance[l + (width * 2) - 1] += error << 1;
-    luminance[l + (width * 2)] += error << 2;
-    luminance[l + (width * 2) + 1] += error << 1;
-    luminance[l + (width * 2) + 2] += error;
-  }
-
-  return image;
-}
-
-function ditherBurkes(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 32);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error << 3;
-    luminance[l + 2] += error << 2;
-    luminance[l + width - 2] += error << 1;
-    luminance[l + width - 1] += error << 2;
-    luminance[l + width] += error << 3;
-    luminance[l + width + 1] += error << 2;
-    luminance[l + width + 2] += error << 1;
-  }
-
-  return image;
-}
-
-function ditherSierra(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 32);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error * 5;
-    luminance[l + 2] += error * 3;
-    luminance[l + width - 2] += error << 1;
-    luminance[l + width - 1] += error << 2;
-    luminance[l + width] += error * 5;
-    luminance[l + width + 1] += error << 2;
-    luminance[l + width + 2] += error << 1;
-    luminance[l + (width * 2) - 1] += error << 1;
-    luminance[l + (width * 2)] += error * 3;
-    luminance[l + (width * 2) + 1] += error << 1;
-  }
-
-  return image;
-}
-
-function ditherSierra2row(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 16);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error << 2;
-    luminance[l + 2] += error * 3;
-    luminance[l + width - 2] += error;
-    luminance[l + width - 1] += error << 1;
-    luminance[l + width] += error * 3;
-    luminance[l + width + 1] += error << 1;
-    luminance[l + width + 2] += error;
-  }
-
-  return image;
-}
-
-function ditherSierraLite(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 4);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 1] += error << 1;
-    luminance[l + width - 1] += error;
-    luminance[l + width] += error;
-  }
-
-  return image;
-}
-
-function ditherStevensonArce(image) {
-  const width = image.width;
-  const luminance = new Uint8ClampedArray(image.width * image.height);
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    luminance[l] = (image.data[i] * 0.299) + (image.data[i + 1] * 0.587) + (image.data[i + 2] * 0.114);
-  }
-
-  for (let l = 0, i = 0; i < image.data.length; l++, i += 4) {
-    const value = luminance[l] < threshold.value ? 0 : 255;
-    const error = Math.floor((luminance[l] - value) / 200);
-    image.data.fill(value, i, i + 3);
-
-    luminance[l + 2] += error << 5;
-    luminance[l + width - 3] += error * 12;
-    luminance[l + width - 1] += error * 26;
-    luminance[l + width + 1] += error * 30;
-    luminance[l + width + 3] += error << 4;
-    luminance[l + (width * 2) - 2] += error * 12;
-    luminance[l + (width * 2)] += error * 26;
-    luminance[l + (width * 2) + 2] += error * 12;
-    luminance[l + (width * 3) - 3] += error * 5;
-    luminance[l + (width * 3) - 1] += error * 12;
-    luminance[l + (width * 3) + 1] += error * 12;
-    luminance[l + (width * 3) + 3] += error * 5;
-  }
-
-  return image;
 }
 
 // Uploads image to DataURL
@@ -716,13 +346,13 @@ async function setNormalFavicon() {
           <option value="Interleaved Gradient Noise">Interleaved Gradient noise</option>
           <option value="R2">R2</option>
           <option value="Plus">Plus</option>
-          <option class="text-[0px] bg-gray-500" disabled>&nbsp;</option>
           <option value="Bayer 2x2">Bayer 2x2</option>
           <option value="Bayer 4x4">Bayer 4x4</option>
           <option value="Bayer 8x8">Bayer 8x8</option>
-          <option value="Cluster dot">WIP Cluster dot</option>
-          <option value="Riemersma">WIP Riemersma</option>
+          <option value="Pattern Halftoning">Pattern Halftoning</option>
+          <option value="Cluster dot">Cluster dot</option>
           <option class="text-[0px] bg-gray-500" disabled>&nbsp;</option>
+          <option value="Riemersma">WIP Riemersma</option>
           <option value="Floyd-Steinberg">Floyd-Steinberg</option>
           <option value="Gradient-based">WIP Gradient-based</option>
           <option value="Lattice-Boltzmann">WIP Lattice-Boltzmann</option>
@@ -751,7 +381,7 @@ async function setNormalFavicon() {
     </div>
     <img v-if="isLoading" class="animate-spin h-7 w-7 top-52 absolute" src="/load.png" />
     <div class="flex justify-center" style="image-rendering: pixelated">
-      <img :src="src" v-if="src" class="w-[90vw] h-70vh object-contain"/>
+      <img :src="src" v-if="src" class="w-[90vw] h-[70vh] object-contain"/>
     </div>
   </div>
 </template>
