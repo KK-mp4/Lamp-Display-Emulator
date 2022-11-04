@@ -7,11 +7,19 @@ let textureSize = 16; // Lamp texture resolution
 const maxSize = ref(512); // Displays maximum size for image depending on texture size
 let inputUrl; // DataURL of uploaded image
 const dithering = ref("None");  // Dithering algorithm option
+const binarization = ref("None");  // Binarization algorithm option
 const threshold = ref(128); // Threshold for binarization
 const isLoading = ref(false); // Controls loading animation
 
 const gammaCoorect = ref(false);
 const renderAsLamps = ref(true);
+
+// binarization options
+const matrixRadius = ref(15);
+const sensitivity = ref(-0.2);
+const k = ref(0.25);
+const t = ref(0.15);
+const a = ref(0.5);
 
 // Canvas needed for animated favicon
 let faviCanvas = document.createElement("canvas");
@@ -56,109 +64,131 @@ async function Draw() {
     imgContext.putImageData(gammaCorrectionData, 0, 0);
   }
 
-  switch (dithering.value) {
-    case "None": {
-      break;
-    }
-    case "White noise": {
-      const processedData = ditherWhiteNoise(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Blue noise": {
-      const processedData = await ditherBlueNoise(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Interleaved Gradient Noise": {
-      const processedData = ditherIGN(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "R2": {
-      const processedData = ditherR2(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Plus": {
-      const processedData = ditherPlus(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Bayer 2x2": {
-      const processedData = ditherBayer2x2(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Bayer 4x4": {
-      const processedData = ditherBayer4x4(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Bayer 8x8": {
-      const processedData = ditherBayer8x8(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Pattern Halftoning": {
-      const processedData = ditherPatternHalftoning(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Cluster dot": {
-      const processedData = ditherClusterDot(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Riemersma": {
+  let binarizationData = imgContext.getImageData(0, 0, imgWidth, imgHeight);
+  let ditheringData;
 
-      break;
+  if (binarization.value != "None") {
+    switch (binarization.value) {
+      case "Niblack": {
+        binarizationNiblack(binarizationData, imgWidth, imgHeight, matrixRadius.value, sensitivity.value);
+        break;
+      }
+      case "Sauvola": {
+        binarizationSauvola(binarizationData, imgWidth, imgHeight, matrixRadius.value, k.value);
+        break;
+      }
+      case "Wulff": {
+        binarizationWulff(binarizationData, imgWidth, imgHeight, matrixRadius.value, a.value);
+        break;
+      }
+      case "Bradley-Roth": {
+        binarizationBradleyRoth(binarizationData, imgWidth, imgHeight, matrixRadius.value, t.value);
+        break;
+      }
     }
-    case "Floyd-Steinberg": {
-      const processedData = ditherFloydSteinberg(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
+  }
+
+  if (dithering.value != "None") {
+    switch (dithering.value) {
+      case "White noise": {
+        ditheringData = ditherWhiteNoise(inputRGBA, threshold.value);
+        break;
+      }
+      case "Blue noise": {
+        ditheringData = await ditherBlueNoise(inputRGBA, threshold.value);
+        break;
+      }
+      case "Interleaved Gradient Noise": {
+        ditheringData = ditherIGN(inputRGBA, threshold.value);
+        break;
+      }
+      case "R2": {
+        ditheringData = ditherR2(inputRGBA, threshold.value);
+        break;
+      }
+      case "Plus": {
+        ditheringData = ditherPlus(inputRGBA, threshold.value);
+        break;
+      }
+      case "Bayer 2x2": {
+        ditheringData = ditherBayer2x2(inputRGBA, threshold.value);
+        break;
+      }
+      case "Bayer 4x4": {
+        ditheringData = ditherBayer4x4(inputRGBA, threshold.value);
+        break;
+      }
+      case "Bayer 8x8": {
+        ditheringData = ditherBayer8x8(inputRGBA, threshold.value);
+        break;
+      }
+      case "Pattern Halftoning": {
+        ditheringData = ditherPatternHalftoning(inputRGBA, threshold.value);
+        break;
+      }
+      case "Cluster dot": {
+        ditheringData = ditherClusterDot(inputRGBA, threshold.value);
+        break;
+      }
+      case "Riemersma": {
+
+        break;
+      }
+      case "Floyd-Steinberg": {
+        ditheringData = ditherFloydSteinberg(inputRGBA, threshold.value);
+        break;
+      }
+      case "Jarvis-Judice-Ninke": {
+        ditheringData = ditherJarvisJudiceNinke(inputRGBA, threshold.value);
+        break;
+      }
+      case "Atkinson": {
+        ditheringData = ditherAtkinson(inputRGBA, threshold.value);
+        break;
+      }
+      case "Stucki": {
+        ditheringData = ditherStucki(inputRGBA, threshold.value);
+        break;
+      }
+      case "Burkes": {
+        ditheringData = ditherBurkes(inputRGBA, threshold.value);
+        break;
+      }
+      case "Sierra": {
+        ditheringData = ditherSierra(inputRGBA, threshold.value);
+        break;
+      }
+      case "Two-Row Sierra": {
+        ditheringData = ditherSierra2row(inputRGBA, threshold.value);
+        break;
+      }
+      case "Sierra Lite": {
+        ditheringData = ditherSierraLite(inputRGBA, threshold.value);
+        break;
+      }
+      case "Stevenson-Arce": {
+        ditheringData = ditherStevensonArce(inputRGBA, threshold.value);
+        break;
+      }
     }
-    case "Jarvis-Judice-Ninke": {
-      const processedData = ditherJarvisJudiceNinke(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
+  }
+
+  // multiply overlay mode of dithered and binarized images
+  if (binarization.value != "None" && dithering.value != "None") {
+    for (let i = 0; i < binarizationData.data.length; i += 4) {
+      const luminance = (binarizationData.data[i] * 0.299) + (binarizationData.data[i + 1] * 0.587) + (binarizationData.data[i + 2] * 0.114);
+      ditheringData.data[i] *= luminance / 255;
+      ditheringData.data[i + 1] *= luminance / 255;
+      ditheringData.data[i + 2] *= luminance / 255;
     }
-    case "Atkinson": {
-      const processedData = ditherAtkinson(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Stucki": {
-      const processedData = ditherStucki(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Burkes": {
-      const processedData = ditherBurkes(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Sierra": {
-      const processedData = ditherSierra(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Two-Row Sierra": {
-      const processedData = ditherSierra2row(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Sierra Lite": {
-      const processedData = ditherSierraLite(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
-    case "Stevenson-Arce": {
-      const processedData = ditherStevensonArce(inputRGBA, threshold.value);
-      imgContext.putImageData(processedData, 0, 0);
-      break;
-    }
+
+    imgContext.putImageData(ditheringData, 0, 0);
+  }
+  else if (binarization.value === "None" && dithering.value != "None") {
+    imgContext.putImageData(ditheringData, 0, 0);
+  }
+  else if (binarization.value != "None" && dithering.value === "None") {
+    imgContext.putImageData(binarizationData, 0, 0);
   }
 
   // Loading of lamp textures
@@ -315,6 +345,50 @@ async function setNormalFavicon() {
   favicon.setAttribute("href", faviCanvas.toDataURL());
 	history.replaceState(null, null, window.location.hash == "#1" ? "#0" : "#1");
 }
+
+async function checkSoefficients() {
+  if (matrixRadius.value > 25) {
+    matrixRadius.value = 25;
+  }
+  else if (matrixRadius.value < 1) {
+    matrixRadius.value = 1;
+  }
+  else {
+    matrixRadius.value = Math.floor(matrixRadius.value);
+  }
+
+  if (sensitivity.value > 0.2) {
+    sensitivity.value = 0.2;
+  }
+  else if (sensitivity.value < -0.2) {
+    sensitivity.value = -0.2;
+  }
+
+  if (k.value >= 1) {
+    k.value = 0.9999;
+  }
+  else if (k.value < 0) {
+    k.value = 0.0001;
+  }
+
+  if (a.value > 10) {
+    a.value = 10;
+  }
+  else if (a.value < -10) {
+    a.value = -10;
+  }
+
+  if (t.value > 1) {
+    t.value = 1;
+  }
+  else if (t.value < 0) {
+    t.value = 0;
+  }
+
+  if (inputUrl) {
+    Draw();
+  }
+}
 </script>
 
 <template>
@@ -335,6 +409,45 @@ async function setNormalFavicon() {
         </select>
         <p class="mb-1 text-sm text-gray-300">PNG or JPG ({{ maxSize }}x{{ maxSize }}px max)</p>
         <input class="block w-[90%] text-sm text-gray-400 rounded-lg border cursor-pointer focus:outline-none bg-gray-700 border-gray-600 placeholder-gray-400" type="file" accept=".png, .jpg" @change="UploadImg($event)">
+        <div class="mt-3">
+          <input v-model= "gammaCoorect" @change="ResolutionChange()" id="Gamma correction" type="checkbox" class="w-3 h-3 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+          <label for="default-checkbox" class="ml-1 text-xsfont-medium text-gray-300">Gamma correction</label>
+          <input v-model= "renderAsLamps" @change="ResolutionChange()" id="Apply lamp texture" type="checkbox" class="ml-3 w-3 h-3 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+          <label for="default-checkbox" class="ml-1 text-xs font-medium text-gray-300">Apply lamp texture</label>
+        </div>
+      </div>
+      <div class="w-[300px] mb-5">
+        <p class="mb-1 text-sm text-gray-300">Binarization algorithm:</p>
+        <select v-model="binarization" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChange()">
+          <option value="None">None</option>
+          <option class="text-[0px] bg-gray-500" disabled>&nbsp;</option>
+          <option value="Niblack">Niblack method</option>
+          <option value="Sauvola">Sauvola method</option>
+          <option value="Wulff">Wulff method</option>
+          <option value="Bradley-Roth">Bradley-Roth method</option>
+        </select>
+        <div class="flex flex-row w-[90%]">
+          <div v-if="binarization != 'None'" class="w-[50%]">
+            <p class="mb-1 text-sm text-gray-300">Matrix radius:</p>
+            <input v-model="matrixRadius" type="number" min="1" step="1" max="25" id="Matrix radius" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div v-if="binarization === 'Niblack'" class="w-[50%]">
+            <p class="mb-1 text-sm text-gray-300">Sensitivity:</p>
+            <input v-model="sensitivity" type="number" min="-0.2" step="0.4" max="0.2" id="Sensitivity" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div v-if="binarization === 'Sauvola'" class="w-[50%]">
+            <p class="mb-1 text-sm text-gray-300">k:</p>
+            <input v-model="k" type="number" id="k" min="0.0001" step="0.01" max="0.9999" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div v-if="binarization === 'Wulff'" class="w-[50%]">
+            <p class="mb-1 text-sm text-gray-300">a:</p>
+            <input v-model="a" type="number" id="a" min="-10" step="0.1" max="10" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+          </div>
+          <div v-if="binarization === 'Bradley-Roth'" class="w-[50%]">
+            <p class="mb-1 text-sm text-gray-300">t:</p>
+            <input v-model="t" type="number" id="t" min="0" step="0.05" max="1" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+          </div>
+        </div>
       </div>
       <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Dithering algorithm:</p>
@@ -367,16 +480,6 @@ async function setNormalFavicon() {
         </select>
         <label class="block mb-2 text-sm font-medium text-gray-300">Threshold: {{  threshold }}</label>
         <input v-model="threshold" type="range" min="0" max="255" class="mb-4 w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChange()">
-      </div>
-      <div class="w-[300px] mb-5">
-        <div class="mt-7 flex items-center mb-4">
-          <input v-model= "gammaCoorect" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
-          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-300">Gamma correction</label>
-        </div>
-        <div class="flex items-center mb-4">
-          <input v-model= "renderAsLamps" @change="ResolutionChange()" id="default-checkbox" type="checkbox" value="" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
-          <label for="default-checkbox" class="ml-2 text-sm font-medium text-gray-300">Apply lamp texture</label>
-        </div>
       </div>
     </div>
     <img v-if="isLoading" class="animate-spin h-7 w-7 top-52 absolute" src="/load.png" />
