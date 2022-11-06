@@ -10,16 +10,17 @@ const dithering = ref("None");  // Dithering algorithm option
 const binarization = ref("None");  // Binarization algorithm option
 const threshold = ref(128); // Threshold for binarization
 const isLoading = ref(false); // Controls loading animation
+const renderTime = ref(0);  // Time it took to process last image
 
-const gammaCoorect = ref(false);
-const renderAsLamps = ref(true);
+const gammaCoorect = ref(false);  // Gamma correction toggle
+const renderAsLamps = ref(true);  // Render lamps toggle
 
 // binarization options
-const matrixRadius = ref(15);
-const sensitivity = ref(-0.2);
-const k = ref(0.25);
-const t = ref(0.15);
-const a = ref(0.5);
+const matrixRadius = ref(15); // Matrix size for binarization
+const sensitivity = ref(-0.2);  // Coefficient for Niblack method
+const k = ref(0.25);  // Coefficient for Sauvola method
+const t = ref(0.15);  // Coefficient for Wulff method
+const a = ref(0.5); // Coefficient for Bradley-Roth method
 
 // Canvas needed for animated favicon
 let faviCanvas = document.createElement("canvas");
@@ -231,7 +232,7 @@ async function Draw() {
 
   isLoading.value = false;
   setNormalFavicon();
-  console.log(Date.now() - start + "ms - Calculation time");
+  renderTime.value = Date.now() - start;
 }
 
 function gammaCorrection(image) {
@@ -395,7 +396,7 @@ async function checkSoefficients() {
   <div class="flex justify-center flex-wrap pt-2 flex-col items-center min-w-[300px]">
     <p class="text-lg text-gray-300">Lamp Display Emulator by KK</p>
     <a class="text-xs text-blue-400 underline" href="https://github.com/KK-mp4/Lamp-Display-Emulator#readme" target="_blank" rel="noopener noreferrer">More info in GitHub</a>
-    <a class="mb-5 text-xs text-blue-400 underline" href="https://kk-mp4.github.io/RGB-Lamp-Display-Emulator/" target="_blank" rel="noopener noreferrer">RGB 3 bit version</a>
+    <a class="mb-5 text-xs text-blue-400 underline" href="https://kk-mp4.github.io/RGB-Lamp-Display-Emulator/">RGB 3 bit version</a>
       <div class="flex flex-wrap flex-row justify-center">
       <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Lamp texture resolution:</p>
@@ -408,17 +409,17 @@ async function checkSoefficients() {
           <option value="32x32">32x32</option>
         </select>
         <p class="mb-1 text-sm text-gray-300">PNG or JPG ({{ maxSize }}x{{ maxSize }}px max)</p>
-        <input class="block w-[90%] text-sm text-gray-400 rounded-lg border cursor-pointer focus:outline-none bg-gray-700 border-gray-600 placeholder-gray-400" type="file" accept=".png, .jpg" @change="UploadImg($event)">
+        <input aria-label="Input for images to process" class="block w-[90%] text-sm text-gray-400 rounded-lg border cursor-pointer focus:outline-none bg-gray-700 border-gray-600 placeholder-gray-400" type="file" accept=".png, .jpg" @change="UploadImg($event)">
         <div class="mt-3">
-          <input v-model= "gammaCoorect" @change="ResolutionChange()" id="Gamma correction" type="checkbox" class="w-3 h-3 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
-          <label for="default-checkbox" class="ml-1 text-xsfont-medium text-gray-300">Gamma correction</label>
-          <input v-model= "renderAsLamps" @change="ResolutionChange()" id="Apply lamp texture" type="checkbox" class="ml-3 w-3 h-3 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+          <input aria-label="Gamma correct?" v-model= "gammaCoorect" @change="ResolutionChange()" id="Gamma correction" type="checkbox" class="w-3 h-3 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
+          <label for="default-checkbox" class="ml-1 text-xs font-medium text-gray-300">Gamma correction</label>
+          <input aria-label="Render lamps?" v-model= "renderAsLamps" @change="ResolutionChange()" id="Apply lamp texture" type="checkbox" class="ml-7 w-3 h-3 text-blue-600 rounded focus:ring-blue-600 ring-offset-gray-800 focus:ring-2 bg-gray-700 border-gray-600">
           <label for="default-checkbox" class="ml-1 text-xs font-medium text-gray-300">Apply lamp texture</label>
         </div>
       </div>
       <div class="w-[300px] mb-5">
         <p class="mb-1 text-sm text-gray-300">Binarization algorithm:</p>
-        <select v-model="binarization" class="w-[90%] mb-5 rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChange()">
+        <select v-model="binarization" class="w-[90%] rounded-lg border h-7 bg-gray-700 border-gray-600 text-gray-400" @change="ResolutionChange()">
           <option value="None">None</option>
           <option class="text-[0px] bg-gray-500" disabled>&nbsp;</option>
           <option value="Niblack">Niblack method</option>
@@ -426,26 +427,26 @@ async function checkSoefficients() {
           <option value="Wulff">Wulff method</option>
           <option value="Bradley-Roth">Bradley-Roth method</option>
         </select>
-        <div class="flex flex-row w-[90%]">
-          <div v-if="binarization != 'None'" class="w-[50%]">
+        <div class="flex flex-row w-[90%] mt-5 justify-between">
+          <div v-if="binarization != 'None'" class="w-[45%]">
             <p class="mb-1 text-sm text-gray-300">Matrix radius:</p>
-            <input v-model="matrixRadius" type="number" min="1" step="1" max="25" id="Matrix radius" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+            <input v-model="matrixRadius" type="number" min="1" step="1" max="25" id="Matrix radius" @change="checkSoefficients()" class="block h-7 w-full rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
           </div>
-          <div v-if="binarization === 'Niblack'" class="w-[50%]">
+          <div v-if="binarization === 'Niblack'" class="w-[45%]">
             <p class="mb-1 text-sm text-gray-300">Sensitivity:</p>
-            <input v-model="sensitivity" type="number" min="-0.2" step="0.4" max="0.2" id="Sensitivity" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+            <input v-model="sensitivity" type="number" min="-0.2" step="0.4" max="0.2" id="Sensitivity" @change="checkSoefficients()" class="block h-7 w-full rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
           </div>
-          <div v-if="binarization === 'Sauvola'" class="w-[50%]">
+          <div v-if="binarization === 'Sauvola'" class="w-[45%]">
             <p class="mb-1 text-sm text-gray-300">k:</p>
-            <input v-model="k" type="number" id="k" min="0.0001" step="0.01" max="0.9999" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+            <input v-model="k" type="number" id="k" min="0.0001" step="0.01" max="0.9999" @change="checkSoefficients()" class="block h-7 w-full rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
           </div>
-          <div v-if="binarization === 'Wulff'" class="w-[50%]">
+          <div v-if="binarization === 'Wulff'" class="w-[45%]">
             <p class="mb-1 text-sm text-gray-300">a:</p>
-            <input v-model="a" type="number" id="a" min="-10" step="0.1" max="10" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+            <input v-model="a" type="number" id="a" min="-10" step="0.1" max="10" @change="checkSoefficients()" class="block h-7 w-full rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
           </div>
-          <div v-if="binarization === 'Bradley-Roth'" class="w-[50%]">
+          <div v-if="binarization === 'Bradley-Roth'" class="w-[45%]">
             <p class="mb-1 text-sm text-gray-300">t:</p>
-            <input v-model="t" type="number" id="t" min="0" step="0.05" max="1" @change="checkSoefficients()" class="block h-7 w-[90%] rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
+            <input v-model="t" type="number" id="t" min="0" step="0.05" max="1" @change="checkSoefficients()" class="block h-7 w-full rounded-lg border sm:text-xs bg-gray-700 border-gray-600 placeholder-gray-400 text-white focus:ring-blue-500 focus:border-blue-500">
           </div>
         </div>
       </div>
@@ -478,13 +479,14 @@ async function checkSoefficients() {
           <option value="Sierra Lite">Sierra Lite</option>
           <option value="Stevenson-Arce">Stevenson-Arce</option>
         </select>
-        <label class="block mb-2 text-sm font-medium text-gray-300">Threshold: {{  threshold }}</label>
-        <input v-model="threshold" type="range" min="0" max="255" class="mb-4 w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChange()">
+        <label class="block mb-2 text-sm font-medium text-gray-300">Quantization threshold: {{  threshold }}</label>
+        <input aria-label="Quantization threshold" v-model="threshold" type="range" min="0" max="255" class="mb-4 w-[90%] h-2 rounded-lg appearance-none cursor-pointer bg-gray-700" @change="ResolutionChange()">
       </div>
     </div>
     <img v-if="isLoading" class="animate-spin h-7 w-7 top-52 absolute" src="/load.png" />
     <div class="flex justify-center" style="image-rendering: pixelated">
-      <img :src="src" v-if="src" class="w-[90vw] h-[70vh] object-contain"/>
+      <img :src="src" v-if="src" class="min-w-[300px] w-[90vw] h-[70vh] object-contain"/>
     </div>
+    <p v-if="src && !isLoading" class="fixed bottom-5 right-5">{{ renderTime }} ms</p>
   </div>
 </template>
